@@ -1,0 +1,15 @@
+{
+  "network": "testnet",
+  "contractId": "junkbonds-dev1.testnet",
+  "rpcUrls": [
+    "https://test.rpc.fastnear.com",
+    "https://rpc.testnet.fastnear.com",
+    "https://near-testnet.drpc.org"
+  ],
+  "explorer": "https://testnet.nearblocks.io",
+  "doorbellKeys": [
+    "ed25519:3dDRXGiFy3is8mzhF6EUWWQQ7MoCYtXcYmhFbnjiKcV1dx26KWuQu6dgzHq6N2Ag9P3is9tYxhRzGbBZC4NfdEp9",
+    "ed25519:29g8cDSLxcjQ4t9eowENW5kXTn5EzQf4x2ZqtTYaQ4SMAXoY9C6XUg5gETPyoEpQ8Fz1A3PkWw2AgEeH4UJ1awt3",
+    "ed25519:2ykbSDDegYroudRAtYBDLMEXn2AFk8kAmFMucGV9vhfe4dPxRUdu5kCh1YmDpJ1cTV3Gdfd5iMfYLAmNLLfjPk3R"
+  ]
+}
