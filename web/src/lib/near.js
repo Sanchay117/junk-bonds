@@ -261,7 +261,8 @@ export class Rpc {
         const json = await res.json();
         if (json.error) {
           const cause = json.error.cause?.name || json.error.name || 'RPC_ERROR';
-          const text = typeof json.error.data === 'string' ? json.error.data : json.error.message;
+          const data = json.error.data;
+          const text = typeof data === 'string' ? data : data ? JSON.stringify(data) : json.error.message;
           throw new RpcError(cause + ': ' + text, json.error);
         }
         if (i > 0) this.urls.unshift(...this.urls.splice(i, 1));
@@ -327,6 +328,7 @@ export class Signer {
     this.seed = seed;
     this.publicKey = 'ed25519:' + b58encode(pub);
     this.nonce = null;
+    this.sent = 0;
   }
 
   async refresh() {
@@ -381,6 +383,7 @@ export class Signer {
           if (!/TIMEOUT/.test(err.message)) throw err;
           outcome = await this.waitFor(signed.hash);
         }
+        this.sent++;
         return readOutcome(outcome, signed.hash);
       } catch (err) {
         const stale = /InvalidNonce|INVALID_TRANSACTION|Expired|InvalidTransaction/i.test(err.message);

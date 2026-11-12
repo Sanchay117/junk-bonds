@@ -1,0 +1,5 @@
+# near-sdk only routes panics to the NEAR host when the `near` cfg is set (cargo-near sets
+# it for you). Without it a failed `require!` reaches the chain as a bare WebAssembly trap
+# with no message. Setting it here makes a plain `cargo build` produce a correct contract.
+[target.wasm32-unknown-unknown]
+rustflags = ["--cfg", "near"]

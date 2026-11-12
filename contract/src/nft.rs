@@ -19,7 +19,8 @@ use crate::rules::{weight_units, EMISSION, KIND_NAMES};
 use crate::{Bond, Contract, ContractExt, Holder};
 
 const GAS_FOR_RESOLVE: Gas = Gas::from_tgas(10);
-const GAS_FOR_TRANSFER_CALL: Gas = Gas::from_tgas(25);
+/// Kept back for this contract's own work, which can include creating the junk's account.
+const GAS_FOR_TRANSFER_CALL: Gas = Gas::from_tgas(45);
 
 #[near(serializers = [json])]
 pub struct NftContractMetadata {
@@ -134,6 +135,9 @@ impl Contract {
         b.ask = 0;
         b.listed = 0;
         let id = b.id;
+        if matches!(self.holder(receiver), Holder::Plain) {
+            self.ensure_account(idx);
+        }
         log_transfer(sender, receiver, &Self::junk_account(id), memo);
     }
 }

@@ -54,7 +54,7 @@ fn key() -> PublicKey {
 fn junk(c: &mut Contract, owner: &AccountId, kind: u8, weight: u8, life: u16) -> String {
     let id = c.next_bond;
     c.next_bond += 1;
-    c.bonds.push(Bond { id, kind, weight, life, born: c.round, owner: owner.clone(), wallet: 0, earned: 0, ask: 0, listed: 0 });
+    c.bonds.push(Bond { id, kind, weight, life, born: c.round, owner: owner.clone(), wallet: 0, earned: 0, ask: 0, listed: 0, has_account: false });
     Contract::junk_account(id).to_string()
 }
 
@@ -220,6 +220,7 @@ fn a_player_bids_wins_and_the_bid_is_burned() {
     assert_eq!(mine.len(), 1);
     assert!(mine[0].wallet > 0, "new junk is paid in the round it is won");
     assert_eq!(mine[0].life, life - 1);
+    assert!(mine[0].has_account, "a player's junk is a real account from the moment it is won");
     assert_eq!(c.balance_of(&alice), STIPEND + 50_000 - 20_000);
     assert!(c.burned >= burned + 20_000);
     assert_eq!(c.players.get(&alice).unwrap().wins, 1);
@@ -390,6 +391,37 @@ fn a_sale_in_the_middle_of_a_payout_moves_the_wallet_with_the_junk() {
     assert_eq!(c.sweep(Some(token.clone())).0, coupon);
     assert_eq!(c.balance_of(&bob), STIPEND - 500 + coupon);
     assert_eq!(ledger_total(&c, &[alice, bob]), c.supply);
+}
+
+#[test]
+fn junk_becomes_a_real_account_when_a_player_comes_to_own_it() {
+    let mut c = fresh();
+    let (alice, bob, duchess) = (acct("alice.testnet"), acct("bob.testnet"), acct("duchess.junk.testnet"));
+    assert!(c.bonds.iter().all(|b| !b.has_account), "raccoon junk starts as a ledger entry");
+    at(T0, &bob, 0);
+    c.register();
+
+    // Bought on the market by a player.
+    let token = Contract::junk_account(c.bonds[0].id).to_string();
+    c.bonds[0].ask = 100;
+    at(T0, &bob, 0);
+    c.buy(token.clone(), U128(100));
+    assert!(c.bonds[0].has_account);
+    let created = near_sdk::test_utils::get_created_receipts();
+    assert!(created.iter().any(|r| r.receiver_id.as_str() == token), "a CreateAccount receipt went to {token}");
+
+    // Given to a player.
+    let gift = Contract::junk_account(c.bonds[1].id).to_string();
+    at(T0, &duchess, 1);
+    c.nft_transfer(alice, gift, None, None);
+    assert!(c.bonds[1].has_account);
+
+    // Or opened by anyone, once.
+    let third = Contract::junk_account(c.bonds[2].id).to_string();
+    at(T0, &acct("stranger.testnet"), 0);
+    assert!(c.open_account(third.clone()));
+    assert!(!c.open_account(third));
+    assert!(!c.open_account(token), "already a real account");
 }
 
 #[test]
@@ -573,6 +605,40 @@ fn the_doorbell_window_resets() {
     at(T0 + JOIN_WINDOW_NS, &house(), 0);
     let _ = c.join("latecomer".to_string(), key());
     assert_eq!(c.join_window_count, 1);
+}
+
+#[test]
+fn a_guest_can_be_refuelled_but_not_too_often() {
+    let mut c = fresh();
+    at(T0, &house(), 0);
+    let _ = c.join("rocky".to_string(), key());
+    with_promise_result(T0, &house(), PromiseResult::Successful(vec![]));
+    assert!(c.on_join(acct("rocky.junk.testnet")));
+
+    at(T0 + REFUEL_NS, &house(), 0);
+    let _ = c.refuel("rocky".to_string());
+    assert_eq!(c.join_window_count, 2, "a refuel counts against the same window as a join");
+    let early = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        at(T0 + REFUEL_NS + SEC, &house(), 0);
+        let _ = c.refuel("rocky".to_string());
+    }));
+    assert!(early.is_err(), "a second refuel right away is refused");
+}
+
+#[test]
+#[should_panic(expected = "no such guest")]
+fn only_enrolled_guests_can_be_refuelled() {
+    let mut c = fresh();
+    at(T0 + REFUEL_NS, &house(), 0);
+    let _ = c.refuel("nobody".to_string());
+}
+
+#[test]
+#[should_panic(expected = "ring the doorbell")]
+fn only_the_doorbell_key_can_call_refuel() {
+    let mut c = fresh();
+    at(T0, &acct("mallory.testnet"), 0);
+    let _ = c.refuel("mallory".to_string());
 }
 
 // ---------------------------------------------------------------------------

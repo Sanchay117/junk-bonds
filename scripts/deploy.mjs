@@ -64,9 +64,9 @@ const doorbells = Array.from({ length: DOORBELLS }, () => newKeyPair());
 const deployed = await owner.send(contractId, [
   actions.deployContract(code),
   actions.functionCall('new', {}, 250n * TGAS),
-  // The doorbell: keys that can call join on this contract and nothing else, each with a
-  // gas allowance so that even a flood of junk calls cannot spend more than this.
-  ...doorbells.map((k) => actions.addFunctionCallKey(k.publicKey, contractId, ['join'], near('3'))),
+  // The doorbell: keys that can call join and refuel on this contract and nothing else,
+  // each with a gas allowance so that even a flood of junk calls cannot spend more than this.
+  ...doorbells.map((k) => actions.addFunctionCallKey(k.publicKey, contractId, ['join', 'refuel'], near('3'))),
 ]);
 console.log('deployed, initialised and hung the doorbells: ' + deployed.hash);
 
@@ -75,8 +75,9 @@ const config = {
   contractId,
   rpcUrls: RPC_URLS,
   explorer: 'https://testnet.nearblocks.io',
-  // PUBLIC BY DESIGN. These are function-call access keys limited to the single method
-  // `join` on the game contract. They cannot move funds, deploy code or call anything else.
+  // PUBLIC BY DESIGN. These are function-call access keys limited to the methods `join`
+  // and `refuel` on the game contract. They cannot move funds, deploy code or call
+  // anything else, and the contract rate-limits both methods.
   doorbellKeys: doorbells.map((k) => k.secretKey),
 };
 writeFileSync(join(ROOT, 'web/src/config.json'), JSON.stringify(config, null, 2) + '\n');

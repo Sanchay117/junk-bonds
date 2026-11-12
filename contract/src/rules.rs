@@ -125,10 +125,15 @@ pub fn flush_bps(wallet: u128, comfort: u128) -> u128 {
 // ---------------------------------------------------------------------------
 
 /// NEAR sent to each guest account so it can pay for its own gas (in 1/1000 NEAR).
-pub const GUEST_FUEL_MILLINEAR: u128 = 50;
-/// At most JOIN_WINDOW_MAX guests per window, so the doorbell cannot drain the contract.
+/// A transaction is charged up front at a pessimistic gas price and refunded afterwards,
+/// so a guest needs far more on hand than it actually burns.
+pub const GUEST_FUEL_MILLINEAR: u128 = 250;
+/// At most JOIN_WINDOW_MAX joins and refuels per window, so the doorbell cannot drain
+/// the contract.
 pub const JOIN_WINDOW_NS: u64 = 600 * SEC;
 pub const JOIN_WINDOW_MAX: u32 = 30;
+/// A guest can be refuelled at most this often.
+pub const REFUEL_NS: u64 = 180 * SEC;
 /// The contract keeps at least this much NEAR back for its own storage (in 1/1000 NEAR).
 pub const RESERVE_MILLINEAR: u128 = 500;
 

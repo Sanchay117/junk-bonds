@@ -52,6 +52,8 @@ pub struct BondView {
     pub in_set: bool,
     pub per_round: u64,
     pub book: u64,
+    /// Whether its NEAR account has been created on chain yet.
+    pub has_account: bool,
 }
 
 #[near(serializers = [json])]
@@ -175,6 +177,7 @@ pub struct Rules {
     pub guest_fuel_millinear: u64,
     pub join_window_ms: u64,
     pub join_window_max: u32,
+    pub refuel_ms: u64,
     pub personas: Vec<PersonaView>,
 }
 
@@ -234,6 +237,7 @@ impl Contract {
                 in_set: *in_set,
                 per_round: (EMISSION * weight_units(b.weight, *in_set) / crowd.max(1)) as u64,
                 book: book_value(b.weight, b.life, *in_set, crowd) as u64,
+                has_account: b.has_account,
             })
             .collect();
 
@@ -418,6 +422,7 @@ impl Contract {
             guest_fuel_millinear: GUEST_FUEL_MILLINEAR as u64,
             join_window_ms: JOIN_WINDOW_NS / 1_000_000,
             join_window_max: JOIN_WINDOW_MAX,
+            refuel_ms: REFUEL_NS / 1_000_000,
             personas,
         }
     }

@@ -77,6 +77,10 @@ pub struct Bond {
     /// Asking price on the market. 0 means not for sale.
     pub ask: u128,
     pub listed: u64,
+    /// Whether its NEAR account has been created yet. It is created the moment a player
+    /// comes to own it (or when anyone calls `open_account`), because creating an account
+    /// costs about as much gas as the rest of a round put together.
+    pub has_account: bool,
 }
 
 /// A resident raccoon's changing state. Its fixed rules are in `rules::PERSONAS`.
@@ -150,6 +154,8 @@ pub struct Player {
     pub earned: u128,
     /// Proceeds from market sales.
     pub sold: u128,
+    /// When the doorbell last gave this account gas money.
+    pub last_fuel: u64,
 }
 
 /// One finished round, kept for the charts.
@@ -288,8 +294,8 @@ impl Contract {
                     earned: 0,
                     ask: 0,
                     listed: 0,
+                    has_account: false,
                 });
-                Promise::new(Self::junk_account(id)).create_account().detach();
                 nft::log_mint(&owner, &Self::junk_account(id));
             }
         }
@@ -314,23 +320,26 @@ impl Contract {
         let account: AccountId = format!("{}.{}", name, env::current_account_id()).parse().unwrap_or_else(|_| env::panic_str("bad name"));
         require!(!self.players.contains_key(&account), "that name is taken");
 
-        let now = env::block_timestamp();
-        if now >= self.join_window_start + JOIN_WINDOW_NS {
-            self.join_window_start = now;
-            self.join_window_count = 0;
-        }
-        require!(self.join_window_count < JOIN_WINDOW_MAX, "the alley is full right now, try again in a few minutes");
-        self.join_window_count += 1;
-
-        let fuel = NearToken::from_millinear(GUEST_FUEL_MILLINEAR);
-        let keep = env::storage_byte_cost().saturating_mul(env::storage_usage() as u128).saturating_add(NearToken::from_millinear(RESERVE_MILLINEAR));
-        require!(env::account_balance() >= keep.saturating_add(fuel), "the doorbell is out of NEAR");
-
+        let fuel = self.doorbell_fuel();
         Promise::new(account.clone())
             .create_account()
             .add_full_access_key(public_key)
             .transfer(fuel)
             .then(Self::ext(env::current_account_id()).with_static_gas(Gas::from_tgas(15)).on_join(account))
+    }
+
+    /// The doorbell again: top a guest's gas money back up so a long session never
+    /// strands them. Once per guest per REFUEL_NS, and it counts against the same window
+    /// as `join`, so the public key still cannot drain the contract.
+    pub fn refuel(&mut self, name: String) -> Promise {
+        require!(env::predecessor_account_id() == env::current_account_id(), "ring the doorbell: refuel is called with the doorbell key");
+        let account: AccountId = format!("{}.{}", name, env::current_account_id()).parse().unwrap_or_else(|_| env::panic_str("bad name"));
+        let now = env::block_timestamp();
+        let player = self.players.get_mut(&account).unwrap_or_else(|| env::panic_str("no such guest"));
+        require!(now >= player.last_fuel + REFUEL_NS, "that guest was refuelled a moment ago");
+        player.last_fuel = now;
+        let fuel = self.doorbell_fuel();
+        Promise::new(account).transfer(fuel)
     }
 
     #[private]
@@ -470,6 +479,15 @@ impl Contract {
         self.note(HAP_LISTED, who.as_str(), &token_id, ask.0, kind);
     }
 
+    /// Make a living piece of junk a real NEAR account now. Anyone may call it, for any
+    /// junk. Returns false if the account already existed.
+    pub fn open_account(&mut self, token_id: String) -> bool {
+        let idx = self.junk_idx(&token_id);
+        let fresh = !self.bonds[idx].has_account;
+        self.ensure_account(idx);
+        fresh
+    }
+
     pub fn unlist(&mut self, token_id: String) {
         let idx = self.junk_idx(&token_id);
         require!(self.bonds[idx].owner == env::predecessor_account_id(), "only the owner can do that");
@@ -592,8 +610,37 @@ impl Contract {
         }
     }
 
+    /// Count one use of the doorbell against its window and check the contract can afford
+    /// it. Returns the gas money to send.
+    fn doorbell_fuel(&mut self) -> NearToken {
+        let now = env::block_timestamp();
+        if now >= self.join_window_start + JOIN_WINDOW_NS {
+            self.join_window_start = now;
+            self.join_window_count = 0;
+        }
+        require!(self.join_window_count < JOIN_WINDOW_MAX, "the alley is full right now, try again in a few minutes");
+        self.join_window_count += 1;
+
+        let fuel = NearToken::from_millinear(GUEST_FUEL_MILLINEAR);
+        let keep = env::storage_byte_cost().saturating_mul(env::storage_usage() as u128).saturating_add(NearToken::from_millinear(RESERVE_MILLINEAR));
+        require!(env::account_balance() >= keep.saturating_add(fuel), "the doorbell is out of NEAR");
+        fuel
+    }
+
+    /// Create the NEAR account that a piece of junk is, once.
+    ///
+    /// The account gets no access keys and no code, so nobody, not even a past owner, can
+    /// ever act as it. Only this contract moves its $TRASH, and only for its current owner.
+    pub(crate) fn ensure_account(&mut self, idx: usize) {
+        if self.bonds[idx].has_account {
+            return;
+        }
+        self.bonds[idx].has_account = true;
+        Promise::new(Self::junk_account(self.bonds[idx].id)).create_account().detach();
+    }
+
     fn enroll(&mut self, account: &AccountId) {
-        self.players.insert(account.clone(), Player { joined: self.round, wins: 0, burned: 0, earned: 0, sold: 0 });
+        self.players.insert(account.clone(), Player { joined: self.round, wins: 0, burned: 0, earned: 0, sold: 0, last_fuel: env::block_timestamp() });
         self.credit(account, STIPEND);
         self.supply += STIPEND;
         self.minted += STIPEND;
@@ -729,11 +776,12 @@ impl Contract {
             }
             let id = self.next_bond;
             self.next_bond += 1;
-            self.bonds.push(Bond { id, kind: lot.kind, weight: lot.weight, life: lot.life, born: lot.round, owner: top.who.clone(), wallet: 0, earned: 0, ask: 0, listed: 0 });
-            // The junk becomes a real NEAR account. It has no keys and no code, so nobody,
-            // not even a past owner, can ever act as it. Only this contract moves its $TRASH.
+            self.bonds.push(Bond { id, kind: lot.kind, weight: lot.weight, life: lot.life, born: lot.round, owner: top.who.clone(), wallet: 0, earned: 0, ask: 0, listed: 0, has_account: false });
+            if human {
+                // A player's junk is a real NEAR account from the moment they win it.
+                self.ensure_account(self.bonds.len() - 1);
+            }
             let account = Self::junk_account(id);
-            Promise::new(account.clone()).create_account().detach();
             nft::log_mint(&top.who, &account);
             self.note(HAP_WON, &winner, account.as_str(), price, lot.kind);
         } else {
@@ -932,6 +980,9 @@ impl Contract {
         b.ask = 0;
         b.listed = 0;
         let (id, kind) = (b.id, b.kind);
+        if matches!(self.holder(&buyer), Holder::Plain) {
+            self.ensure_account(idx);
+        }
         nft::log_transfer(&seller, &buyer, &Self::junk_account(id), "junk sale");
         if let Some(p) = self.players.get_mut(&seller) {
             p.sold += price - tax;
