@@ -7,6 +7,7 @@ Built at NEAR HACKATHON, November 2026. Tracks: `games`, `nfts`, `memecoins`.
 | | |
 | --- | --- |
 | Play | https://sanchay117.github.io/junk-bonds/ |
+| Demo video | https://youtu.be/izQHu687ipY (66 seconds) |
 | Contract | [`junkbonds.testnet`](https://testnet.nearblocks.io/address/junkbonds.testnet) on NEAR testnet |
 | Code | one Rust contract in `contract/`, one static page in `web/`, no server |
 
