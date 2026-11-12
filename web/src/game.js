@@ -101,7 +101,13 @@ class Game {
 
   async poll() {
     try {
-      const world = await rpc.view(C, 'get_world', { account_id: this.state.session?.accountId ?? null });
+      const asked = this.state.session?.accountId ?? null;
+      const world = await rpc.view(C, 'get_world', { account_id: asked });
+      // Public RPC nodes are not always on the same block. Never step back to an older one,
+      // or a lot that just sold would flicker back onto the block.
+      const shown = this.state.world;
+      if (shown && (world.round < shown.round || world.now_ms < shown.now_ms)) return;
+      if (asked !== (this.state.session?.accountId ?? null)) return; // the session changed while this was in flight
       if (!this.clock || world.now_ms > this.now()) this.clock = { chain: world.now_ms, wall: performance.now() };
 
       // A stored guest that this contract does not know (it was redeployed): start over.
