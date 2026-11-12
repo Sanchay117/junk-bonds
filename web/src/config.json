@@ -1,6 +1,6 @@
 {
   "network": "testnet",
-  "contractId": "junkbonds-dev2.testnet",
+  "contractId": "junkbonds.testnet",
   "rpcUrls": [
     "https://test.rpc.fastnear.com",
     "https://rpc.testnet.fastnear.com",
@@ -8,8 +8,8 @@
   ],
   "explorer": "https://testnet.nearblocks.io",
   "doorbellKeys": [
-    "ed25519:q72gRMmdcqRndGdtQ57eiztvMTmqQYxhP3pAobSWKfUpvcgYZAfXvNkYCnnPRmzqneUsSVd5h3i4WpfpC5HiHQU",
-    "ed25519:4JfFcyvsoQP8JWqaGAkP95j2PqAgesCkFzMJfuNhYdD1APU5996Jsx2ci9LJXfAKZ9sxBXc9a22sYH7SaPc8MHx6",
-    "ed25519:2b3bPGYva3Rsd15Zow5NXLT6HDk9dQmSxtFXVg52H6UX4iPAbLRv6LauBmu3TKaFhce4RQuUotVMRAaVHPJJybfq"
+    "ed25519:2DWyhTciDxTPGRfkqP64vXRWSzTjfvd4b72hv19MDYSkBL2Erf5y94ncGVozpog5jE8m22n8piwfHHCKJ8Zs8jFm",
+    "ed25519:2Nz1zJmdeoekBrSbApRwDPRiuT3gpiuqD5Ayuxr34gVHeoK8iUmxejsRsVeri5DfydTNgShUmWfCUV8UgQmJmUf8",
+    "ed25519:QXtRLmpfW1M35GLghbrTWE88scsx6yUAnkBv6UptgiK2UNihDohhASPzVXLx1wqquZPgTiNE6CEhqYGKhZ528st"
   ]
 }

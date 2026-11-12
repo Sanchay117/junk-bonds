@@ -1,0 +1,54 @@
+contract junkbonds.testnet
+emission 1000 per round, stipend 2000, residents Duchess, Pockets, Flip, Yolo, Snatch
+
+1. doorbell join -> e2emwdjxsyo.junkbonds.testnet in 2876 ms, 15.32 Tgas
+   https://testnet.nearblocks.io/txns/CyprGS6xALTpA8r5sDhUopwfyozM8fWHZedQBwuyP1Ws
+  ok    join returned true  true
+  ok    guest account exists on chain with gas money  0.2500 NEAR
+  ok    guest is enrolled with the stipend  2000 $TRASH
+  ok    the doorbell key is refused for any other method
+  ok    a guest cannot be refuelled straight after joining
+
+   settled a stale lot first (4.48 Tgas) https://testnet.nearblocks.io/txns/ADPUGsVU96w3dnNk4fmQvrxEv1AgqfmGPJ9XJppZgxjk
+
+2. lot 88: Bent Umbrella, weight 5, life 23, book 779, next bid 77
+   bid 77 in 1813 ms, 3.05 Tgas -> {"ok":false,"reason":"outbid","round":88,"high":"77","next":"87"}
+   https://testnet.nearblocks.io/txns/GPMpKGTWVGMq5ezRbtyKtq1a5chAQqvoRB2UZPPDmon4
+  ok    bid was answered
+   duchess       77  why=0
+   pockets      210  why=0
+   flip         324  why=5
+   duchess      349  why=0
+   pockets      439  why=0
+   flip         483  why=5
+   snatch       521  why=4
+   flip         562  why=5
+   duchess      606  why=0
+   snatch       654  why=4
+   e2emwdjxsyo   706
+   pockets      762  why=0
+   e2emwdjxsyo   822
+   pockets      887  why=0
+   e2emwdjxsyo   957
+3. poke settled the lot, 13.78 Tgas
+   https://testnet.nearblocks.io/txns/95HxCnw4qDbdvaLcCuoSRGA1bus2dzDijXQb5mmSFWF3
+   lot 88 went to e2emwdjxsyo.junkbonds.testnet for 957, 15 bids, supply now 35576
+  ok    the history has the settled lot
+4. fast_forward ran 5 rounds, 12.60 Tgas  https://testnet.nearblocks.io/txns/5HYSzZ2HoDLep9CGY2VaL9tjrbL2X9RDnQAsZbm1m8TV
+4. fast_forward ran 5 rounds, 11.08 Tgas  https://testnet.nearblocks.io/txns/DusiErzu12YzkiDDs4uSvf1Tt5vcTCy9EpmZ1T3BsAtM
+4. fast_forward ran 5 rounds, 11.28 Tgas  https://testnet.nearblocks.io/txns/2KjgnqZGx1mDYtGeN9m228RWCaoh3Kr8eU5zfNQcgaYc
+  ok    fast-forward advanced the world  round 89 -> 104
+  ok    the junk is a real NEAR account  bond-103.junkbonds.testnet
+  ok    its $TRASH balance is its wallet  584 $TRASH
+  ok    the junk account has no access keys
+   raccoon offers: duchess 250, pockets 276, flip 413, yolo 315, snatch 267
+5. sweep -> 584 $TRASH, 3.36 Tgas  https://testnet.nearblocks.io/txns/9nqKw88fGhnFjJQd1TqRCAEX4fjVfzfFhDqyPHYbRBHR
+  ok    sweep paid out the wallet
+   listed for 260, 2.85 Tgas  https://testnet.nearblocks.io/txns/DKZWo2kmj4itjHdwBtjEFxrhsSv97cNFKLgFypmtC8dg
+  ok    nft_token shows the live listing  Bent Umbrella #103
+  ok    every $TRASH is accounted for (raccoons + junk + players = supply)  35731 = 35731
+  ok    supply = minted - burned  122495 - 86764
+
+guest gas money left: 0.2340 NEAR of 0.250 after 19 transactions
+
+all checks passed

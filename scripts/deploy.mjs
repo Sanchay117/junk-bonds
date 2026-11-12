@@ -22,7 +22,7 @@ if (!existsSync(WASM)) {
 }
 const code = new Uint8Array(readFileSync(WASM));
 const DOORBELLS = 3;
-const TARGET_NEAR = 24n; // storage for the code is about 6 NEAR; the rest fuels guests
+const TARGET_NEAR = BigInt(process.env.TARGET_NEAR || 38); // about 6 NEAR is storage for the code; the rest fuels guests
 
 async function waitFor(check, what) {
   for (let i = 0; i < 20; i++) {

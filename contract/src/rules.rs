@@ -14,7 +14,7 @@ pub const EMISSION: u128 = 1_000;
 /// weight units of junk that never rots. A raccoon that goes broke can always recover.
 pub const SCAVENGE_UNITS: u128 = 4;
 /// One-time welcome mint for each new player.
-pub const STIPEND: u128 = 1_500;
+pub const STIPEND: u128 = 2_000;
 /// What each resident raccoon starts with.
 pub const NPC_GENESIS_WALLET: u128 = 3_000;
 /// Junk each resident raccoon starts with, so the alley opens mid-economy.

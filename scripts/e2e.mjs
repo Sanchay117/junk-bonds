@@ -89,13 +89,17 @@ if (bid.value.ok) {
   check('the bid shows in the lot', true, w.lot.bids.length + ' bids so far, locked ' + w.me.locked);
 }
 
-// 3. Watch the raccoons answer, then settle the lot when it closes.
+// 3. Keep outbidding the raccoons while the stipend lasts, then settle the lot when it closes.
 let seen = 0;
 while (true) {
   w = await world(me);
   if (w.lot.round !== lotRound) break;
   for (const b of w.lot.bids.slice(seen)) console.log('   ' + b.who.split('.')[0].padEnd(10) + String(b.amount).padStart(6) + (b.why === 255 ? '' : '  why=' + b.why));
   seen = w.lot.bids.length;
+  if (w.lot.phase === 'live' && w.lot.leader !== me && w.lot.next <= w.me.balance) {
+    await guest.call(C, 'bid', { amount: String(w.lot.next) }, { gas: 40n * TGAS });
+    continue;
+  }
   if (w.lot.phase === 'done') {
     const p = await guest.call(C, 'poke', {}, { gas: 40n * TGAS });
     console.log('3. poke settled the lot, ' + burnt(p) + '\n   ' + tx(p.hash));
