@@ -216,6 +216,7 @@ web/src/game.js          state and actions
 web/src/app.jsx          the screen
 web/src/art.jsx          the junk, the raccoons and the certificate, drawn in SVG
 scripts/                 deploy, warm up, end-to-end check, top up, lock
+film/                    source of the demo film: narration, a recorder that films the live game, Remotion scenes
 docs/                    the built page (GitHub Pages serves this folder)
 evidence/                output of the end-to-end run against the live contract
 ```

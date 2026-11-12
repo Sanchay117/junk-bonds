@@ -10,3 +10,9 @@ dist/
 .env.local
 submission.json
 submission/
+
+# The demo film's generated files: voice takes, the screen recording, renders.
+film/out/
+film/public/
+film/src/art.tsx
+film/src/web.css

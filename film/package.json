@@ -1,0 +1,28 @@
+{
+  "name": "junk-bonds-film",
+  "private": true,
+  "description": "The demo film: a motion opening, real footage of the game on NEAR testnet, then how the money works.",
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "voice": "node --env-file=../../appwrite/.env scripts/voice.ts",
+    "audio": "node scripts/audio.mjs",
+    "capture": "node scripts/capture.ts",
+    "render": "remotion render JunkBonds out/junk-bonds-raw.mp4 --crf=18",
+    "master": "node scripts/master.mjs",
+    "thumbnails": "remotion still Thumbnail out/thumbnail-1920.png && remotion still Thumbnail out/thumbnail-1280.png --scale=0.6667"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.537",
+    "@remotion/google-fonts": "4.0.537",
+    "remotion": "4.0.537",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.0.0",
+    "playwright-core": "1.64.1",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,11 @@
+/* The film is rendered frame by frame, so nothing may move on the browser's own clock. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+body {
+  background: #17181a;
+}
